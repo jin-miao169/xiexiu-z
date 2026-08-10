@@ -4796,13 +4796,6 @@ document.addEventListener('click',function(e){
 console.log('[Delegation] 文档级事件委托已就绪');
 
 
-  if(typeof window.switchView==='function'){
-    window.switchView(vid);
-    return 'OK: switched to '+vid;
-  }
-  return 'FAIL: switchView not found';
-};
-
 
 // ===== 全局函数注册 =====
 if(typeof filterWords!=="undefined")window.filterWords=filterWords;
