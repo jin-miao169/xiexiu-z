@@ -2427,22 +2427,22 @@ var WORDBANK_INLINE=[["gallery","/ˈɡæləri/","n.","美术馆；画廊；顶�
 <!-- Navigation -->
 <nav class="navbar" id="navbar">
   <div class="navbar-title">邪修境界</div>
-  <button class="nav-btn active" data-view="view1" onclick="switchView('view1')">
+  <button class="nav-btn active" data-view="view1">
     <span class="nav-icon">邪</span><span class="nav-label">邪修堂</span><span class="nav-arrow">›</span>
   </button>
-  <button class="nav-btn" data-view="view2" onclick="switchView('view2')">
+  <button class="nav-btn" data-view="view2">
     <span class="nav-icon">笑</span><span class="nav-label">爆笑堂</span><span class="nav-arrow">›</span>
   </button>
-  <button class="nav-btn" data-view="view3" onclick="switchView('view3')">
+  <button class="nav-btn" data-view="view3">
     <span class="nav-icon">藏</span><span class="nav-label">藏经阁</span><span class="nav-arrow">›</span>
   </button>
-  <button class="nav-btn" data-view="view4" onclick="switchView('view4')">
+  <button class="nav-btn" data-view="view4">
     <span class="nav-icon">天</span><span class="nav-label">天机阁</span><span class="nav-arrow">›</span>
   </button>
-  <button class="nav-btn" data-view="view5" onclick="switchView('view5')">
+  <button class="nav-btn" data-view="view5">
     <span class="nav-icon">星</span><span class="nav-label">收藏夹</span><span class="nav-arrow">›</span>
   </button>
-  <button class="nav-btn" data-view="view6" onclick="switchView('view6')">
+  <button class="nav-btn" data-view="view6">
     <span class="nav-icon">词</span><span class="nav-label">记单词</span><span class="nav-arrow">›</span>
   </button>
 </nav>
@@ -4750,18 +4750,40 @@ function init(){
 window.init=init;
 
 // ===== Event Delegation (替代 inline onclick) =====
-document.addEventListener('DOMContentLoaded',function(){
-  document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      if(typeof switchView==='function'){
-        switchView(this.getAttribute('data-view'));
-      }else if(typeof window.switchView==='function'){
-        window.switchView(this.getAttribute('data-view'));
-      }
+(function(){
+  function bindNav(){
+    var btns=document.querySelectorAll('.nav-btn[data-view]');
+    console.log('绑定导航按钮: '+btns.length+' 个, switchView type: '+(typeof window.switchView));
+    btns.forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        var vid=this.getAttribute('data-view');
+        console.log('点击导航: '+vid);
+        if(typeof window.switchView==='function'){
+          window.switchView(vid);
+        }else{
+          console.error('switchView not found! type='+typeof window.switchView);
+        }
+      });
     });
-  });
-  console.log('Event delegation 已绑定, switchView type: '+typeof switchView);
-});
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',bindNav);
+  }else{
+    bindNav();
+  }
+})();
+
+
+// Debug: 直接测试
+window.testSwitchView=function(vid){
+  console.log('testSwitchView: vid='+vid+', switchView type='+typeof window.switchView);
+  if(typeof window.switchView==='function'){
+    window.switchView(vid);
+    return 'OK: switched to '+vid;
+  }
+  return 'FAIL: switchView not found';
+};
 
 window.onload=init;
 </script>
