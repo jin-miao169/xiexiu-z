@@ -2551,17 +2551,17 @@ var WORDBANK_INLINE=[["gallery","/ˈɡæləri/","n.","美术馆；画廊；顶�
       <p class="section-desc">在完整句子中记忆 · 语义关联 · 深度理解 · 全面覆盖 CET4 / CET6 / 考研 / IELTS / TOEFL</p>
       <div class="word-toolbar" id="wordToolbar">
         <div class="word-filter-bar">
-          <button class="word-filter-btn active" data-level="all" onclick="filterWords('all')">全部</button>
-          <button class="word-filter-btn" data-level="cet4" onclick="filterWords('cet4')">CET-4</button>
-          <button class="word-filter-btn" data-level="cet6" onclick="filterWords('cet6')">CET-6</button>
-          <button class="word-filter-btn" data-level="kaoyan" onclick="filterWords('kaoyan')">考研</button>
-          <button class="word-filter-btn" data-level="ielts" onclick="filterWords('ielts')">IELTS</button>
-          <button class="word-filter-btn" data-level="toefl" onclick="filterWords('toefl')">TOEFL</button>
+          <button class="word-filter-btn active" data-level="all">全部</button>
+          <button class="word-filter-btn" data-level="cet4">CET-4</button>
+          <button class="word-filter-btn" data-level="cet6">CET-6</button>
+          <button class="word-filter-btn" data-level="kaoyan">考研</button>
+          <button class="word-filter-btn" data-level="ielts">IELTS</button>
+          <button class="word-filter-btn" data-level="toefl">TOEFL</button>
         </div>
         <div class="word-search-bar">
-          <input type="text" class="word-search-input" id="wordSearchInput" placeholder="搜索单词..." oninput="searchWord(this.value)">
-          <button class="word-shuffle-btn" onclick="shuffleWords()">随机打乱</button>
-          <button class="word-flip-all-btn" onclick="flipAllWords()">全部翻面</button>
+          <input type="text" class="word-search-input" id="wordSearchInput" placeholder="搜索单词...">
+          <button class="word-shuffle-btn">随机打乱</button>
+          <button class="word-flip-all-btn">全部翻面</button>
         </div>
       </div>
       <div class="word-stats" id="wordStats"></div>
@@ -4707,6 +4707,9 @@ function escapeHtml(str){
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function init(){
+  // 预加载词库
+  loadWordBank(function(){console.log('[Init] 词库预加载完成: '+wordBank.length+' 词');});
+
   buildAllItems();
   initParticles();
   initFavorites();
@@ -4749,35 +4752,50 @@ function init(){
 }
 window.init=init;
 
-// ===== Event Delegation (替代 inline onclick) =====
-(function(){
-  function bindNav(){
-    var btns=document.querySelectorAll('.nav-btn[data-view]');
-    console.log('绑定导航按钮: '+btns.length+' 个, switchView type: '+(typeof window.switchView));
-    btns.forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.preventDefault();
-        var vid=this.getAttribute('data-view');
-        console.log('点击导航: '+vid);
-        if(typeof window.switchView==='function'){
-          window.switchView(vid);
-        }else{
-          console.error('switchView not found! type='+typeof window.switchView);
-        }
-      });
-    });
+// ===== Event Delegation (文档级委托，最可靠) =====
+document.addEventListener('click',function(e){
+  // Nav buttons
+  var navBtn=e.target.closest('.nav-btn[data-view]');
+  if(navBtn){
+    var vid=navBtn.getAttribute('data-view');
+    console.log('[Nav] 点击: '+vid);
+    if(window.switchView){window.switchView(vid);}
+    else{console.error('switchView missing!');}
+    return;
   }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',bindNav);
-  }else{
-    bindNav();
+  // Word filter buttons
+  var filterBtn=e.target.closest('.word-filter-btn[data-level]');
+  if(filterBtn){
+    var level=filterBtn.getAttribute('data-level');
+    console.log('[Filter] 切换到: '+level);
+    if(window.filterWords){window.filterWords(level);}
+    return;
   }
-})();
+  // Word cards (flip)
+  var wordCard=e.target.closest('.word-card[data-word]');
+  if(wordCard){
+    var word=wordCard.getAttribute('data-word');
+    console.log('[Card] 翻转: '+word);
+    if(window.flipWord){window.flipWord(wordCard,word);}
+    return;
+  }
+  // Shuffle button
+  if(e.target.closest('.word-shuffle-btn')){
+    console.log('[Action] 随机打乱');
+    if(window.shuffleWords){window.shuffleWords();}
+    return;
+  }
+  // Flip all button
+  if(e.target.closest('.word-flip-all-btn')){
+    console.log('[Action] 全部翻面');
+    if(window.flipAllWords){window.flipAllWords();}
+    return;
+  }
+},true); // capture phase to ensure we fire first
+
+console.log('[Delegation] 文档级事件委托已就绪');
 
 
-// Debug: 直接测试
-window.testSwitchView=function(vid){
-  console.log('testSwitchView: vid='+vid+', switchView type='+typeof window.switchView);
   if(typeof window.switchView==='function'){
     window.switchView(vid);
     return 'OK: switched to '+vid;
@@ -4785,6 +4803,62 @@ window.testSwitchView=function(vid){
   return 'FAIL: switchView not found';
 };
 
+
+// ===== 全局函数注册 =====
+if(typeof filterWords!=="undefined")window.filterWords=filterWords;
+if(typeof searchWord!=="undefined")window.searchWord=searchWord;
+if(typeof shuffleWords!=="undefined")window.shuffleWords=shuffleWords;
+if(typeof flipAllWords!=="undefined")window.flipAllWords=flipAllWords;
+if(typeof flipWord!=="undefined")window.flipWord=flipWord;
+if(typeof getLevelLabel!=="undefined")window.getLevelLabel=getLevelLabel;
+if(typeof getSentence!=="undefined")window.getSentence=getSentence;
+if(typeof openZodiacDetail!=="undefined")window.openZodiacDetail=openZodiacDetail;
+if(typeof openDetail!=="undefined")window.openDetail=openDetail;
+if(typeof closeModal!=="undefined")window.closeModal=closeModal;
+if(typeof switchViewerTab!=="undefined")window.switchViewerTab=switchViewerTab;
+if(typeof toggleFavorite!=="undefined")window.toggleFavorite=toggleFavorite;
+if(typeof removeFromFavorites!=="undefined")window.removeFromFavorites=removeFromFavorites;
+if(typeof addToFavorites!=="undefined")window.addToFavorites=addToFavorites;
+if(typeof renderWords!=="undefined")window.renderWords=renderWords;
+if(typeof loadWordBank!=="undefined")window.loadWordBank=loadWordBank;
+if(typeof getTodayWords!=="undefined")window.getTodayWords=getTodayWords;
+if(typeof getDayIndex!=="undefined")window.getDayIndex=getDayIndex;
+if(typeof checkNetwork!=="undefined")window.checkNetwork=checkNetwork;
+if(typeof setNetStatus!=="undefined")window.setNetStatus=setNetStatus;
+if(typeof startAutoRefresh!=="undefined")window.startAutoRefresh=startAutoRefresh;
+if(typeof callDeepSeek!=="undefined")window.callDeepSeek=callDeepSeek;
+if(typeof refreshContent!=="undefined")window.refreshContent=refreshContent;
+if(typeof updateClock!=="undefined")window.updateClock=updateClock;
+if(typeof renderCelestialClock!=="undefined")window.renderCelestialClock=renderCelestialClock;
+if(typeof renderCategories!=="undefined")window.renderCategories=renderCategories;
+if(typeof renderBreakdowns!=="undefined")window.renderBreakdowns=renderBreakdowns;
+if(typeof renderMemes!=="undefined")window.renderMemes=renderMemes;
+if(typeof renderTopics!=="undefined")window.renderTopics=renderTopics;
+if(typeof renderBooks!=="undefined")window.renderBooks=renderBooks;
+if(typeof renderBookFilter!=="undefined")window.renderBookFilter=renderBookFilter;
+if(typeof renderAlmanac!=="undefined")window.renderAlmanac=renderAlmanac;
+if(typeof renderZodiac!=="undefined")window.renderZodiac=renderZodiac;
+if(typeof renderSolarTerms!=="undefined")window.renderSolarTerms=renderSolarTerms;
+if(typeof renderFavorites!=="undefined")window.renderFavorites=renderFavorites;
+if(typeof renderFunnyVideos!=="undefined")window.renderFunnyVideos=renderFunnyVideos;
+if(typeof renderDouyinVideos!=="undefined")window.renderDouyinVideos=renderDouyinVideos;
+if(typeof initParticles!=="undefined")window.initParticles=initParticles;
+if(typeof buildAllItems!=="undefined")window.buildAllItems=buildAllItems;
+if(typeof showNotification!=="undefined")window.showNotification=showNotification;
+if(typeof showModal!=="undefined")window.showModal=showModal;
+if(typeof escapeHtml!=="undefined")window.escapeHtml=escapeHtml;
+console.log("[Init] 全局函数注册完成");
+
+// Search input listener
+document.addEventListener('DOMContentLoaded',function(){
+  var si=document.getElementById('wordSearchInput');
+  if(si){
+    si.addEventListener('input',function(){
+      if(window.searchWord)window.searchWord(this.value);
+    });
+    console.log('[Search] 搜索框监听已绑定');
+  }
+});
 window.onload=init;
 </script>
 
